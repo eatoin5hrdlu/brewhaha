@@ -1,0 +1,61 @@
+:- module(tosc,[              % Manage multiple OSC connections.
+                 sendOSC/2,   % Send to current destination
+                 sendOSC/3 ]).% Specify destination and make current
+
+:- load_foreign_library(foreign(plblue)). % float_codes/3
+:- use_module(library(socket)).
+:- dynamic current_/4, hostIPPortSocket/4.
+
+atomCodes(A,C):-catch(atom_codes(A,C),error(type_error(_,_),_),false),!.
+atomCodes(C,C).
+
+connectOSC                        :- connectOSC(  _ ,_,_,_).
+connectOSC(Host)                  :- connectOSC(Host,_,_,_).
+connectOSC(Host, IP, Port,Socket) :-
+    ( nonvar(Host) -> true ; Host = localhost),
+    ( hostIPPortSocket(Host,IP,Port,Socket) -> true % connected
+    ; tcp_host_to_address(Host, IP),
+      udp_socket(Socket),
+      (nonvar(Port) -> true ; Port=57110),
+      assert(hostIPPortSocket(Host,IP,Port,Socket))
+    ),
+    retractall(current_/4),
+    assert(current_(Host,IP,Port,Socket)).
+
+currentHost(Host,IP,Port,Socket) :-
+      current_(Host,IP,Port,Socket)  -> true
+    ; connectOSC(Host,IP,Port,Socket).
+
+sendOSC(Name, Data) :-   sendOSC(_,Name,Data).
+sendOSC(Host,Name,Data)  :- 
+    currentHost(Host,IP,Port,Socket),
+    osc(Name, Data, OSCCodes,[]),
+    udp_send(Socket, OSCCodes, IP:Port, []).
+
+% OSC format:   /address,<typeString>Data1,Data2...
+% <typeString> is a string of characters "ifs" (integer,float,string)
+% Outer DCG rules create the the <typeString> while the inner code
+% packs the Data into a list to be appended to ",<typeString>"
+% Strings are zero terminated and padded to 4-byte boundaries
+
+osc(Addr,Data) --> {atomCodes(Addr,Cs)}, padded([0'/|Cs]), opt_data(Data).
+
+opt_data([])   --> !.
+opt_data(Data) --> [0',], oscData(Data,0,Bytes), Bytes.
+
+oscData(    [], T,    []) --> [0], pad4(T+2). % T+2 (',' and [0])
+oscData([D|Ds], T, Bytes) -->
+    ({integer(D)} -> [0'i], { oscInt(   D,   Bytes, Next) }
+    ;{float(D)  } -> [0'f], { float_codes(D, Bytes, Next) }
+    ;  	             [0's], { padded(   D,   Bytes, Next) }
+    ), oscData(Ds, T+1, Next).
+
+oscInt(I)  --> findall(B,(member(S,[24,16,8,0]),B is I>>S/\255)).
+
+padded(A)  --> {atomCodes(A,C),length(C,L)}, C, [0], pad4(L+1).
+
+pad4(Expr) --> {P is mod(4-mod(Expr,4),4)}, zeros(P).
+
+zeros(0) --> !.
+zeros(N) --> [0],{NN is N-1},zeros(NN).
+
