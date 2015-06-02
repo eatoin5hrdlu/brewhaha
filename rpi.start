@@ -1,10 +1,16 @@
 #!/bin/bash
-
+#
+# Run  "sudo alsamixer" to check the volume
+# Run "sudo raspi-config" to force audio to headphone jack
+# First time:  run "emacs -sclang su.sc" and load the Synthesizers
+#
 jackd -m -p 32 -d dummy &
-sleep 1
-alsa_out -q1 2>&1 > /dev/null &
-sleep 1
+sleep 2
+alsa_out -q1 2>&1 >/dev/null &
+sleep 10
 scsynth -u 57110 &
-sleep 1
+sleep 4
 jack_connect SuperCollider:out_1 alsa_out:playback_1 &
+sleep 1
 jack_connect SuperCollider:out_2 alsa_out:playback_2 &
+

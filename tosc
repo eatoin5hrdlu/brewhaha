@@ -2,7 +2,8 @@
                  sendOSC/2,   % Send to current destination
                  sendOSC/3 ]).% Specify destination and make current
 
-:- load_foreign_library(foreign(plblue)). % float_codes/3
+%:- load_foreign_library(foreign(plblue)). % float_codes/3
+:- load_foreign_library(plblue). % float_codes/3
 :- use_module(library(socket)).
 :- dynamic current_/4, hostIPPortSocket/4.
 

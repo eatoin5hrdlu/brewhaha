@@ -3,8 +3,8 @@
 #define NULL ((void *)0)
 #endif
 
-// #define LINUX 1
-#define WINDOWS 1
+#define LINUX 1
+//#define WINDOWS 1
 #define WORDS__BIGENDIAN 1
 #ifdef WINDOWS
 #include "plbluewindows.h"
@@ -291,8 +291,6 @@ foreign_t pl_float_codes(term_t Number, term_t Codes)
 
 		return PL_unify_float(Number, tmp);
 		}
-
-        PL_warning("float_codes/2: Instatiation error");
         PL_fail;
 }
 

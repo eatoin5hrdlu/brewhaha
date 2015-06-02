@@ -1,9 +1,42 @@
-// Windows only
-(
+( // Windows only
 Server.local.options.device ="ASIO4ALL";
 s = Server.local;
 s.boot;
 )
+s.freeAll;
+
+( // Linux
+s = Server.local;
+s.boot;
+)
+
+(
+s.sendMsg("/n_free", 1001);
+s.freeAll;
+)
+
+(
+d = LID("/dev/input/event0");
+~gtish = Synth.new("mtish");
+~gecho = Synth.new("echo");
+d.action = { arg evtType, evtCode, evtValue;
+	//	[evtType.asHexString(4), evtCode.asHexString(4), evtValue].postln;
+	var dly = evtValue/64;
+	var dcy = evtValue/32;
+	~gecho.set(\delay, dly);
+	~gecho.set(\decay, dly);
+	dly.postln;
+}
+)
+
+
+(
+(
+d.startEventLoop
+)
+
+s.freeAll;
+s.sendMsg("/dumpOSC",1);
 (
 x = {
     MdaPiano.ar(
@@ -32,17 +65,21 @@ SynthDef("mtish", { arg freq = 1200, rate = 2, amp = 5;
 	osc = {WhiteNoise.ar(trg)}.dup;
 	Out.ar(0, osc); // send output to audio bus zero.
 }).load(s);
-)(
+)
+
+
+(
 // define an echo effect
 SynthDef("echo", { arg delay = 0.03, decay = 3;
 	var in, mdelay;
 	in = In.ar(0,2);
-	mdelay = MouseY.kr(0.01,1);
+	//	mdelay = MouseX.kr(0.01,1);
 	// use ReplaceOut to overwrite the previous contents of the bus.
-	ReplaceOut.ar(0, CombN.ar(in, 0.5, mdelay, decay, 1, in));
+	ReplaceOut.ar(0, CombN.ar(in, 0.5, delay, decay, 1, in));
 }).load(s);
 )
-)(
+)
+
 //McCartney's Babbling Brook
 (
 SynthDef(\brook,{Out.ar(0,{
@@ -52,7 +89,9 @@ SynthDef(\brook,{Out.ar(0,{
 * 800 + 1000, 0.03, 0.005)}!2)
 * 4
 })}).load(s);
-	)(
+)
+
+(
 // EFFECT WRAPPER
 ~makeEffect = { arg name, func, lags, numChannels = 2;
 
@@ -70,7 +109,9 @@ SynthDef(\brook,{Out.ar(0,{
 	}, [0, 0, 0.1] ).load(s);
 
 };
-	)(
+)
+
+(
 // now make a wah
 
 ~makeEffect.value(\wah, { arg in, env, rate = 0.7, ffreq = 1200, depth = 0.8, rq = 0.1;
@@ -81,7 +122,9 @@ SynthDef(\brook,{Out.ar(0,{
 	[0.1, 0.1, 0.1, 0.1],  // lags for rate ffreq, depth and rq
 	2	// numChannels
 );
-	)(
+)
+
+(
 // now make a simple reverb
 ~makeEffect.value(\reverb, { arg in, env;
 	// in and env come from the wrapper.
@@ -92,7 +135,9 @@ SynthDef(\brook,{Out.ar(0,{
 	nil,  // no lags
 	2	// numChannels
 );
-	)(
+)
+
+(
  SynthDef(\rain, {arg out=0,rate=3;
 		var x,y;
 		x = MouseX.kr(0.01,1);

@@ -1,0 +1,81 @@
+:- use_module(tosc, [sendOSC/2]).
+
+sound(Sound,N)        :- sendOSC(s_new,[Sound,N,1,0]).
+
+debug :- sendOSC(dumpOSC,[1]).
+
+newgroup :- sendOSC(g_new,[1,0,0]).
+
+silence :-
+	sendOSC(g_freeAll,[1]),
+	sendOSC(g_freeAll,[0]).
+
+
+effect(Effect,N,Args) :- sendOSC(s_new,[Effect,N,1,0|Args]).
+
+kill(N)    :- integer(N),!,sendOSC(n_free,[N]).
+kill([]).
+kill([H|T]) :- sendOSC(n_free,[H]), kill(T).
+
+off([]).
+off([N|Ns]) :- off(N), off(Ns).  % Graceful shutoff (sound fades)
+off(N)     :- integer(N), sendOSC(n_run,[N,0]).
+
+on([]).
+on([N|Ns]) :- on(N), on(Ns).
+on(N)     :- integer(N), sendOSC(n_run,[N,1]).
+
+fast(N)    :- sendOSC(n_set,[N,rate,23.98]).
+medium(N)  :- sendOSC(n_set,[N,rate,3]).
+slow(N)    :- sendOSC(n_set,[N,rate,1.1]).
+realslow(N)    :- sendOSC(n_set,[N,rate,1.1]).
+freeAll    :- sendOSC(freeAll,[]).
+
+wah(N,Wah)    :- sendOSC(s_new,[wah,Wah,3,N]).
+reverb(N,Rev) :- sendOSC(s_new,[reverb,Rev,3,N,wet,0.4]).
+
+sctest(Node) :-             % Start SuperCollider if necessary
+        debug,
+	EchoNode is Node + 1,
+	BrookNode is Node + 2,
+	Wah is Node + 10,
+        Rev is Node + 11,
+        writeln('Running sctest with Node #'(Node)),
+        sound(mtish,Node),
+        sound(brook,BrookNode),
+%        sound(rain,Node),
+        sleep(10),
+%        R2 is Node + 5,
+%        sound(rain,R2),
+%	Noises = [Node,R2],
+%	sendOSC(n_set,[R2,out,1, rate,6]),
+%        sleep(4),
+%        realslow(Node),
+%        sleep(4),
+%        realslow(R2),
+%	on(Node),
+%        sleep(2),
+        effect(echo,EchoNode,[delay,0.1,decay,1]),
+	sendOSC(global,["cecho",EchoNode]),
+        sleep(40),
+        slow(Node),
+        sleep(3),
+%        medium(Node),
+%        sleep(3),
+%        fast(Node),
+%        sleep(3),
+%        fast(R2),
+%        off(Node),
+%        sleep(2),
+%	on(Node),
+%        sleep(4),
+	wah(Node,Wah),
+%        sleep(4),
+%	reverb(Node,Rev),
+        sleep(400),
+%        off(Noises),
+	kill([Node,EchoNode,BrookNode]),
+%	kill([Node,EchoNode,Wah,Rev]),
+	halt.
+
+
