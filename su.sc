@@ -1,13 +1,94 @@
-( // Windows only
-Server.local.options.device ="ASIO4ALL";
-s = Server.local;
-s.boot;
-)
 s.freeAll;
 
-( // Linux
+( // Windows only Server.local.options.device ="ASIO4ALL";
 s = Server.local;
 s.boot;
+s.initTree;
+)
+
+(
+c = Buffer.read(s, "/home/pi/src/brewhaha/Cowbell.wav");
+d = Buffer.read(s, "/home/pi/src/brewhaha/bleep.wav");
+e = Buffer.read(s, "/home/pi/src/brewhaha/takeoff.wav");
+)
+e.postln;
+c.postln;
+
+(
+x = SynthDef(\cowbell, { arg out = 0, bufnum = 2;
+		 Out.ar( out,
+
+			 PlayBuf.ar(1, bufnum, BufRateScale.kr(bufnum),loop:0)
+           	   )
+                       }
+           ).load(s);
+)
+
+(
+t = SynthDef("takeoff", { arg out = 0, bufnum = 0;
+		 Out.ar( out,
+
+			 PlayBuf.ar(1, bufnum, BufRateScale.kr(bufnum),loop:1.0)
+           	   )
+                       }
+           ).load(s);
+)
+
+(
+p = Synth(\cowbell);
+)
+s.plotTree;
+u.run;
+
+Pbind(\degree, Pseries(0,1,30),\dur, 1.0).play;
+
+
+Pbind(\instrument, \cowbell, \bufnum, 2, \dur, Pseries(2,-0.3,32)).play;
+
+(
+Pbind(\note, Pseq([[0,3,7], [2,5,8], [3,7,10], [5,8,12]],3),
+	  \legato, 0.4,
+	  \strum, 0.04,
+	  \dur, 0.5).play;
+)
+
+
+s.sendMsg(\n_set,1001, \gate, 1);
+
+s.sendMsg(\play,1000);
+
+(
+s.z.play(s);
+)
+
+
+
+
+
+
+// now play it
+(
+SynthDef("tutorial-PlayBuf",{ arg out = 0, bufnum;
+	Out.ar( out,
+		PlayBuf.ar(1, bufnum, BufRateScale.kr(bufnum))
+	)
+}).play(s,[\bufnum, b.bufnum ]);
+)
+
+
+(
+x.free; b.free;
+)
+
+s.queryAllNodes;
+
+(
+play{
+	BPF.ar(
+		Mix(
+			Pulse.ar(587.3*[1,1.5074]))*EnvGen.ar(Env([0,1,0.1,0],[0.0005, 0.015,0.283]),
+				Impulse.ar(2)),2640,0.9)!2}
+
 )
 
 (
@@ -15,17 +96,18 @@ s.sendMsg("/n_free", 1001);
 s.freeAll;
 )
 
+//		[evtType.asHexString(4), evtCode.asHexString(4), evtValue].postln;
+
+
 (
-d = LID("/dev/input/event0");
-~gtish = Synth.new("mtish");
-~gecho = Synth.new("echo");
-d.action = { arg evtType, evtCode, evtValue;
-	//	[evtType.asHexString(4), evtCode.asHexString(4), evtValue].postln;
-	var dly = evtValue/64;
-	var dcy = evtValue/32;
-	~gecho.set(\delay, dly);
-	~gecho.set(\decay, dly);
-	dly.postln;
+d = LID("/dev/input/event1");
+t = Synth.new("mtish");
+~e = Synth.new("echo");
+
+d.slot(0x01,0x120).action = { arg slot ;
+	var ndly = (slot.value/2.0)+0.01;
+	ndly.postln;
+	s.sendMsg(\n_set,1001,\delay, ndly);
 }
 )
 
@@ -70,7 +152,7 @@ SynthDef("mtish", { arg freq = 1200, rate = 2, amp = 5;
 
 (
 // define an echo effect
-SynthDef("echo", { arg delay = 0.03, decay = 3;
+SynthDef("echo", { arg delay = 0.1, decay = 3;
 	var in, mdelay;
 	in = In.ar(0,2);
 	//	mdelay = MouseX.kr(0.01,1);
