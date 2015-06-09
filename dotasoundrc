@@ -1,16 +1,19 @@
 # ~/.asoundrc  Read by ALSA (JACK, if using ALSA backend)
 
+#
+# Here is your vanilla .asoundrc file
 #pcm.!default {
 #	type hw
 #	card 0
 #}
-
+#
 #ctl.!default {
 #	type hw
 #	card 0
 #}
+# End of vanilla .asoundrc file
 
-# Here, two 2 stereo devs being merged into 1 4-channel psuedo-device
+# Here, three stereo devs being merged into 1 6-channel psuedo-device
 
 pcm.merge {
     type multi;
@@ -18,15 +21,29 @@ pcm.merge {
     slaves.a.channels 2;
     slaves.b.pcm hw:1
     slaves.b.channels 2;
+    slaves.c.pcm hw:2
+    slaves.c.channels 2;
+
     bindings.0.slave a;
     bindings.0.channel 0;
+
     bindings.1.slave b;
     bindings.1.channel 0;
+
     bindings.2.slave a;
     bindings.2.channel 1;
+
     bindings.3.slave b;
     bindings.3.channel 1;
+
+    bindings.4.slave c;
+    bindings.4.channel 0;
+
+    bindings.5.slave c;
+    bindings.5.channel 1;
 }
+# Note above, first two devices A and B alternate outputs
+# Then last two channels are from Device C
 
 # Device name: merge. Use anywhere you use hw:0, hw:HDA, hw:DSP, plughw:1
 # "hw:0"(hw:1) as first (second) component/slave of slave.a.pcm (slave.b.pcm)
