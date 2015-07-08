@@ -6,6 +6,9 @@
 
 // donde almacenar las notas
 ~notes = List.new;
+
+s = Server.default;
+
 s.freeAll;
 (
 s.quit;
@@ -15,7 +18,8 @@ s.boot;
 (
 var midifile, path, div, score, tempo= 160, step=0;
 // archivo midi
-path ="C:/cygwin/home/peter/soundSpace/SuperCollider/MIDIFile/waechter.mid";
+//path ="/home/peter/src/brewhaha/waechter.mid";
+path ="/home/peter/src/brewhaha/watcher.mid";
 
 midifile=MIDIFile.new;
 midifile.read(path);
