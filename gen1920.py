@@ -293,11 +293,25 @@ def serialize_stream(stream, repeats=1):
   """
   new_stream = music21.stream.Stream() 
   copies = len(stream)
+  icount = 0
+  instruments = [ music21.instrument.Guitar(),
+                  music21.instrument.Clarinet(),
+                  music21.instrument.Guitar(),
+                  music21.instrument.Piano(),
+                  music21.instrument.Piccolo(),
+                  music21.instrument.Piano(),
+                  music21.instrument.Guitar(),
+                  music21.instrument.Clarinet() ]
   for i in range(copies): 
     for part in reversed(stream):
+      if (icount < 8 ) :
+        new_stream.append(instruments[icount])
+        icount = icount + 1
       length = part.duration.quarterLength
       new_stream.append(copy.deepcopy(part.flat.elements))
   return new_stream, length
+
+
 
 def canon(serialized_stream, delay, voices, extra_transposition_map={}):
   """
@@ -323,7 +337,7 @@ if __name__ == "__main__":
   #
   ############################################################################
   # define a chord progression that serves as basis for the canon (change this!)
-  chords = "C F Am Dm G C"
+  chords = "C9 F7 Am7 Dm G C7"
   # scale in which to interpret these chords
   scale = music21.scale.MajorScale("C")
   # realize the chords using the given number of voices (e.g. 4)
@@ -357,13 +371,13 @@ if __name__ == "__main__":
   # split each chord into a separate voice
   keyDetune = []
   for i in range(0, 127):
-    keyDetune.append(random.randint(-30, 30))
+    keyDetune.append(random.randint(-60, 60))
   for c in splitted_chords:
     pitches = realize_chord(c, voices, octave, direction="descending")
     for v in range(voices):
       note = music21.note.Note(pitches[v])
-      note.quarterLength = quarterLength
-#      note.microtone = keyDetune[note.midi]
+      note.quarterLength = quarterLength - 1 
+      note.microtone = keyDetune[note.midi]
       streams[v].append(note)
 
   # combine all voices to one big stream

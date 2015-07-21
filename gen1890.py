@@ -293,9 +293,21 @@ def serialize_stream(stream, repeats=1):
   """
   new_stream = music21.stream.Stream() 
   copies = len(stream)
+  icount = 0
+  instruments = [ music21.instrument.Violin(),
+                  music21.instrument.Piano(),
+                  music21.instrument.Cowbell(),
+                  music21.instrument.Piano(),
+                  music21.instrument.Piccolo(),
+                  music21.instrument.Piano(),
+                  music21.instrument.Piano(),
+                  music21.instrument.Piano() ]
   for i in range(copies): 
     for part in reversed(stream):
       length = part.duration.quarterLength
+      if (icount < 4 ) :
+        new_stream.append(instruments[icount])
+        icount = icount + 1
       new_stream.append(copy.deepcopy(part.flat.elements))
   return new_stream, length
 
@@ -323,7 +335,8 @@ if __name__ == "__main__":
   #
   ############################################################################
   # define a chord progression that serves as basis for the canon (change this!)
-  chords = "C F Am Dm G C"
+#  chords = "C7 Fm7 Am E7 Dm G C"
+  chords = "C7 Fm7 Am E7 G C"
   # scale in which to interpret these chords
   scale = music21.scale.MajorScale("C")
   # realize the chords using the given number of voices (e.g. 4)
@@ -354,6 +367,7 @@ if __name__ == "__main__":
   splitted_chords = chords.split(" ")
   for v in range(voices):
     streams[v] = music21.stream.Stream()
+    streams[v].instrument = music21.instrument.Violin()
   # split each chord into a separate voice
   keyDetune = []
   for i in range(0, 127):
@@ -362,8 +376,8 @@ if __name__ == "__main__":
     pitches = realize_chord(c, voices, octave, direction="descending")
     for v in range(voices):
       note = music21.note.Note(pitches[v])
-      note.quarterLength = quarterLength
-#      note.microtone = keyDetune[note.midi]
+      note.quarterLength = quarterLength 
+      note.microtone = keyDetune[note.midi]
       streams[v].append(note)
 
   # combine all voices to one big stream
@@ -371,6 +385,9 @@ if __name__ == "__main__":
   for r in range(stacking):
     for s in streams:
       totalstream.insert(0, copy.deepcopy(streams[s]))
+#      for el in s.recurse():
+#        if 'Instrument' in el.classes: # or 'Piano'
+#          el.activeSite.replace(el, instrument.Violin())
 
   # add some spice to the boring chords. sugar and spice is always nice
   spiced_streams = [totalstream]
