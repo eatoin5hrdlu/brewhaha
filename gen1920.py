@@ -23,7 +23,7 @@ def pairwise(iterable):
 
   s -> (s[0], s[1]), (s[1], s[2]), (s[2], s[3]), ..., (s[Last], None)
   """
-  return zip(iterable, iterable[1:]) + [(iterable[-1], None)]
+  return list(zip(iterable, iterable[1:])) + [(iterable[-1], None)]
 
 def median(lst, if_even_length_use_upper_element=False):
   """ return the median of a list """
@@ -37,13 +37,13 @@ def median(lst, if_even_length_use_upper_element=False):
 
   if length % 2 != 0:
     # median of a list with odd lenght is well-defined
-    return lst[(length-1)/2]
+    return lst[int((length-1)/2)]
   else:
     # median of a list with even length is a bit tricky
     if not if_even_length_use_upper_element:
-      return lst[(length-1)/2]
+      return lst[int((length-1)/2)]
     else:
-      return lst[(length)/2]
+      return lst[int((length)/2)]
 
 def realize_chord(chordstring, numofpitch=3, baseoctave=4, direction="ascending"):
   """
@@ -51,7 +51,7 @@ def realize_chord(chordstring, numofpitch=3, baseoctave=4, direction="ascending"
   if direction == "descending", reverse the list of pitches before returning them
   """
   pitches = music21.harmony.ChordSymbol(chordstring).pitches
-  num_iter = numofpitch/len(pitches)+1
+  num_iter = int( numofpitch/len(pitches)+1 )
   octave_correction = baseoctave - pitches[0].octave
   result = []
   actual_pitches = 0
@@ -371,13 +371,14 @@ if __name__ == "__main__":
   # split each chord into a separate voice
   keyDetune = []
   for i in range(0, 127):
-    keyDetune.append(random.randint(-60, 60))
+    keyDetune.append(random.randint(-1, 1))
+#    keyDetune.append(random.randint(-60, 60))
   for c in splitted_chords:
     pitches = realize_chord(c, voices, octave, direction="descending")
     for v in range(voices):
       note = music21.note.Note(pitches[v])
       note.quarterLength = quarterLength - 1 
-      note.microtone = keyDetune[note.midi]
+#      note.microtone = keyDetune[note.midi]
       streams[v].append(note)
 
   # combine all voices to one big stream
