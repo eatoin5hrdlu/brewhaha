@@ -1,6 +1,10 @@
 # brewhaha
 A Musical Instrument for Yeast
 
+New: full.py records midi to file tune.txt (without timings), midi1.py plays it back
+Usage:   python full.py --input 3  (for a plugged in MIDI USB cable, try MIDI instrument 3)
+         python -i midi1.py  (in interactive mode, type "run()"
+
 
  Biology           Electronics            Software              Music
 
